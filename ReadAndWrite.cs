@@ -41,24 +41,60 @@ namespace PDFFarsi
             var reader = new PdfReader(filePath);
             int intPageNum = reader.NumberOfPages;
             string sOut = string.Empty;
-
+            
+            string sz = string.Empty;
 
             for (int i = 1; i <= intPageNum; i++)
             {
-                var text = PdfTextExtractor.GetTextFromPage(reader, i, new LocationTextExtractionStrategy());
+                var text = PdfTextExtractor.GetTextFromPage(reader, i); //, new LocationTextExtractionStrategy());
                 text = Encoding.UTF8.GetString(Encoding.UTF8.GetBytes(text));
-                text = new UnicodeCharacterPlacement
-                {
-                    Font = new System.Drawing.Font("Tahoma", 12)
-                }.Apply(text);
-
-                sOut += text;
-            }
+                sOut= invertArray(text,false);               
+            }            
             reader.Close();
-            return sOut;
+
+
+            ////////////////////////////// invert lines
+            string[] lines = sOut.Split(Environment.NewLine.ToCharArray(), StringSplitOptions.None);
+            for (int k = lines.Length - 1; k >= 0; k--)
+            {
+                sz += Environment.NewLine + lines[k].ToString();            
+            }                        
+            return sz;
 
         }
 
+        private string invertArray(string input , bool recursive)
+        {
+            string s = string.Empty;
+            var ar = input.ToCharArray();
+            string bufferCash = string.Empty; 
+
+            for (int j = ar.Length - 1; j >= 0; j--)
+            {
+                if ((ar[j] >= 'a' && ar[j] <= 'z') || (ar[j] >= 'A' && ar[j] <= 'Z') || Char.IsDigit(ar[j]))
+                {
+                    Console.WriteLine(ar[j] + " is an Eglish Alphabet or digit ");
+                    bufferCash += ar[j].ToString();
+                }
+                else
+                {
+                    if (bufferCash.Length > 0)
+                    {
+                        Console.WriteLine(ar[j] + "  flush buffer" + bufferCash);
+                        s += invertArray(bufferCash ,true);
+                        bufferCash = string.Empty;
+                    }
+                    
+                    s += ar[j].ToString();
+                }
+            }
+
+            if (recursive)
+                return bufferCash;
+            else
+                return s;        
+
+        }
 
     }
 }
